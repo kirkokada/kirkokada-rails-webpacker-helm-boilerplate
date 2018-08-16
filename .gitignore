@@ -22,4 +22,6 @@
 /node_modules
 yarn-debug.log*
 .yarn-integrity
+
 codeship.aes
+credentials.env
