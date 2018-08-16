@@ -1,0 +1,12 @@
+- name: run_specs
+  tag: master
+  service: app
+  command: rspec spec
+
+- name: push_image
+  type: push
+  tag: master
+  service: app
+  image_name: kirkokada/rails-webpack-kube-boilerplate
+  image_tag: "{{.CommitID}}"
+  encrypted_dockercfg_path: ci/dockercfg.encrypted

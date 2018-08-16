@@ -1,0 +1,6 @@
+app:
+  build:
+    image: kirkokada/rails-webpack-boilerplate
+    dockerfile: Dockerfile
+  volumes:
+    - .:/app
