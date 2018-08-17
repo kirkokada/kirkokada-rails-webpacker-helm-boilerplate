@@ -1,7 +1,7 @@
 - name: run_specs
   tag: master
   service: app
-  command: rspec spec
+  command: 'bundle exec rspec'
 
 - name: push_image
   type: push
