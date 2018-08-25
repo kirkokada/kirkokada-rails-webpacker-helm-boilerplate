@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'thor'
+require 'highline'
+
+class SQL < Thor
+  desc 'create', 'Create Cloud SQL instance and database'
+  def create
+    version = cli.ask('Database Version: ') { |q| q.default = 'POSTGRES_9_6' }
+    tier = cli.ask('Instance Type: ') { |q| q.default = 'db-f1-micro' }
+    zone = cli.ask('GCE Zone: ') { |q| q.default = 'us-west1-a' }
+
+    create_instance(version, tier, zone) || exit
+
+    cli.say("Creating database on #{db_name} instance...")
+    create_db || exit
+  end
+
+  desc 'delete', 'Delete SQL instance and database'
+  def delete
+    system("gcloud sql instances delete #{db_name}")
+  end
+
+  private
+
+  def cli
+    @cli ||= HighLine.new
+  end
+
+  def create_instance(version, tier, zone)
+    cmd = <<~HEREDOC
+      gcloud sql instances create \
+      --database-version=#{version} \
+      --tier=#{tier} \
+      --gce-zone=#{zone} \
+      #{db_name}
+    HEREDOC
+
+    system(cmd)
+  end
+
+  def create_db
+    cmd = <<~HEREDOC
+      gcloud sql databases create \
+      #{db_name} \
+      --instance=#{db_name} \
+      --charset=UTF8 \
+      --collation=en_US.UTF8
+    HEREDOC
+
+    system(cmd)
+  end
+
+  def db_name
+    File.basename(Dir.getwd) + "-db"
+  end
+
+  def database_versions
+    %w(MYSQL_5_5 MYSQL_5_6 MYSQL_5_7 POSTGRES_9_6)
+  end
+end
+
+class GCP < Thor
+  desc 'sql SUBCOMMAND ...ARGS', 'Manage Google Cloud SQL resources'
+  subcommand :sql, SQL
+end
+
+GCP.start(ARGV)
