@@ -12,6 +12,8 @@ gem 'rails', '~> 5.1.6'
 gem 'turbolinks'
 gem 'uglifier'
 gem 'webpacker'
+gem 'thor'
+gem 'highline'
 
 group :development, :test do
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
