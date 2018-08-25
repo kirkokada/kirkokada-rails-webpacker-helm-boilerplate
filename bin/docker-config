@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'highline'
+require 'thor'
+
+class DockerConfig < Thor
+  desc "encrypt", "Generates encrypted docker file for use with codeship (OSX)"
+  def encrypt
+    username = cli.ask('Docker Username: ')
+    password = cli.ask('Docker Password: ') { |q| q.echo = false }
+    registry = cli.ask('Docker Registry: ') { |q| q.default = 'https://index.docker.io/v1/' }
+
+    puts 'Generating unencrypted docker config...'
+    generate_dockercfg_file(username, password, registry) || exit
+
+    puts 'Encrypting docker config file...'
+    system('mkdir ./ci/') || exit unless Dir.exist?('./ci/')
+    system('jet encrypt dockercfg ci/dockercfg.encrypted')
+
+    puts 'Cleaning up...'
+    system('rm ./dockercfg')
+
+    puts 'Done!'
+  end
+
+  private
+
+  def cli
+    @cli ||= HighLine.new
+  end
+
+  def generate_dockercfg_file(username, password, registry)
+    cmd = <<~HEREDOC
+      docker run -it --rm \
+        -e "DOCKER_USERNAME=#{username}" \
+        -e "DOCKER_PASSWORD=#{password}"  \
+        -e "DOCKER_REGISTRY=#{registry}" \
+        -v "$(pwd):/opt/data/"  \
+        -v "/var/run/docker.sock:/var/run/docker.sock" \
+        codeship/dockercfg-generator /opt/data/dockercfg
+    HEREDOC
+
+    system(cmd)
+  end
+end
+
+DockerConfig.start(ARGV)
